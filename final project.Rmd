@@ -1,0 +1,173 @@
+---
+title: 'Estimating the relationship between Average Assaults and other criminal behaviour'
+author: "Tongxin Zeng"
+date: "12.20.2020"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+## Abstract
+The dataset "Neighborhood Crime Rate" describes the 2014-2019 crime rate by neighborhood in Toronto, thus, I use a simple linear regression model, logistic regression model, random intercept model, and multilevel Bayesian (logistic) regression model to investigate the relationship between the Average Assaults and Toronto neighborhood identifier, 2016 Census Population, Average auto thefts, Average break and enters, Average homicides, Average robberies, Average thefts. 
+
+As a result, I find that there is a positive linear relationship between the Average Assaults and Toronto neighborhood identifier, 2016 Census Population, Average break and enters, Average homicides, Average robberies, Average thefts but a negative linear relationship between average assault rate and Average auto thefts. 
+
+In addition, the logistic regression models tell that there is a positive relationship between the probability of having a large number of Assaults and Toronto neighborhood identifier, 2016 Census Population, Average break and enters, Average homicides, Average robberies, Average thefts but a negative relationship between the probability of having a large number of assault and Average auto thefts.
+
+The result matters because when we find the relationship between those variables, we might refer to the whole population and deal with practical problems.
+
+## Introduction
+ With nowadays' development of technology and the gradual improvement in laws, people are living in a more and more peaceful society and their living standard is rising as well. However, the crime rate is still one thing that we need to concern about as it shows the extent of the violence in society and the crime would influence people's safety and living standard directly. So, how many assaults happens in Toronto during 2014-2019? Does it have any relationship with Toronto's neighborhood? Will a higher auto-theft rate leads to a higher assault rate? In order to discover the answers to these questions regarding Toronto Crime Rate, I conduct a statistical project by using the dataset from the University of Toronto, I am using the data called "Neighborhood Crime Rate", which includes the 2014-2019 Crime Data by Neighborhood in Toronto. Values are available for Assault, Auto Theft, Break and Enter, Robbery, Theft Over, and Homicide. Data also includes five-year averages and crime rates per 100,000 people by neighborhood based on the 2016 Census Population. I use the dataset from University of Toronto because this dataset contains a variety of crimes and the sample size is really large, which would make my analysis more precise. 
+  
+  One of the most important aspects of this report is that by studying the core questions above, which people can realize the reason behind the increase in crime rate in recent years. After studying the change in Toronto Crime Rate, people will be able to identify the cause of an increasing number of assaults in Toronto: by an increasing amount of related criminal behavior like homicides or just because of a specific neighborhood? And the government could put more effort to deal with those causes so that the crime rate in Toronto would not increase or decrease 
+  
+  My objective is to investigate if there is a positive relationship between the Average Assaults and other criminal behaviors like Average auto theft, Average break and enters, Average homicides, Average robberies and Average thefts over on the Average Assaults. In addition, my another hypothesis is that those criminal behaviors will also positively increase the probability to have a high assault.
+  
+  Under this report, the audience will be able to recognize the connection between the Average Assaults and the explanatory factors, such as Toronto neighborhood identifier, 2016 Census Population, Average auto thefts, Average break and enters, Average homicides, Average robberies, Average thefts. 
+
+##Keywords:
+Toronto, Crime, Assault
+
+##Data
+The dataset is from the University of Toronto open data and is called "Neighborhood Crime Rate". It includes the 2014-2019 Crime Data by Neighborhood in Toronto. Values are available for Assault, Auto Theft, Break and Enter, Robbery, Theft Over, and Homicide. Thus, we could find that all variables are numerical numbers.
+
+The target population in this project is all the people in Canada. The frame is four-year averages and crime rates per 100,000 people by neighborhood based on 2016 Census Population. The sample is neighborhoods in Toronto. Since the Toronto Neighborhoods Boundary File includes all 2014-2019 Crime Data by Neighborhood, then I do not need to consider non-response. 
+
+One weakness about this project is that the dataset is an observational study but I wish to make the causal inference. In order to solve this, I set the Average Assaults as response variables(y) and Toronto neighborhood identifier, 2016 Census Population, Average auto theft, Average break and enters, Average homicides, Average robberies and Average thefts as explanatory variables(x). 
+
+I use a simple linear regression model, logistic regression model, random intercept model and multilevel Bayesian (logistic) regression model to aim for the correct conclusions for the questions proposed. 
+
+Besides, I set one another dummy variable called "large-number-of-assault", it will be equal to 1 if the total number of assault in the neighborhood is bigger than the average assault amount in Toronto and 0 otherwise.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(bookdown)
+library(readr)
+Neighbourhood_Crime <- readr::read_csv(
+  file = "/Users/zengtongxin/Desktop/UT/2020\ fall/sta304/Neighbourhood\ Crime\ Rates.csv"
+)
+library(tidyverse)
+library(dplyr)
+Neighbourhood_Crime
+```
+
+## Exploratory Data Analysis
+In order to begin the project, the first step is to explore the relationship between my response variable(i.e. the total number of assault from 2014 to 2019) and seven explanatory variables(i.e.Toronto neighborhood identifier, 2016 Census Population, Average auto thefts, Average break and enters, Average homicides, Average robberies, Average thefts). Hence, I firstly plot a histogram for the Average Number of Assault from 2014-2019 for all Neighbourhood ID included in the dataset:
+```{r}
+Neighbourhood_Crime %>% 
+  ggplot(aes(x = Neighbourhood_Crime$Assault_AVG)) + geom_histogram(bins = 7) + labs(title = "Figure 1 - Average Assault Histogram")  
+summary(Neighbourhood_Crime$Assault_AVG)
+```
+From the histogram shown in figure 1, my response variable's distribution is right-skewed, which implies that there is no well-defined center of the distribution. Therefore, I do the summary of "Average Assault from 2014-2019" and find that the mean is 132.65 assault, the median is 96.5 assault. Since the distribution of the average number of assault happened during 2014 to 2019 is right-skewed and we could find that there are some extreme values, thus, I choose to use the median(96.5) as the center of my response variable's distribution, meaning neighborhoods in my survey sample typically has 96.5 assault happened during 2014 to 2019.
+
+I now begin to investigate whether there is a linear relationship between my response variable and the explanatory variables. I plot 7 graphs to find the relationship between the response variable(Average count of assault) and each independent variable.
+```{r}
+#Average Assaults from 2014 - 2019 vs  City of Toronto neighbourhood identifier
+Neighbourhood_Crime %>% 
+  ggplot(mapping=aes(x=Hood_ID,y=Neighbourhood_Crime$Assault_AVG))+geom_point()+ labs(x = "Toronto Neighbourhood ID", y="Average number of Assault", title = "Figure 2.1 - Neighbourhood vs. Average Assault")
+
+#Average Assaults from 2014 - 2019 vs  2016 Census Population
+Neighbourhood_Crime %>% 
+  ggplot(mapping=aes(x=Population,y=Neighbourhood_Crime$Assault_AVG))+geom_point() + labs(x = "2016 Census Population", y="Average number of Assault", title = "Figure 2.2 - 2016 census population vs. Average Assault")
+
+#Average Assaults from 2014 - 2019 vs  Average Auto Theft from 2014-2019
+Neighbourhood_Crime %>% 
+  ggplot (mapping=aes(x=Neighbourhood_Crime$AutoTheft_AVG,y=Neighbourhood_Crime$Assault_AVG))+xlim(0,100)+ylim(0,400)+geom_point()+ labs(x = "Average number of auto theft", y="Average number of Assault", title = "Figure 2.3 - Average Auto theft vs. Average Assault")
+
+#Average Assaults from 2014 - 2019 vs  Average Break and Enters from 2014-2019
+Neighbourhood_Crime %>% 
+  ggplot (mapping=aes(x=Neighbourhood_Crime$BreakandEnter_AVG,y=Neighbourhood_Crime$Assault_AVG))+xlim(0,150)+ylim(0,600)+geom_point()+ labs(x = "Average counts of Break and Enters", y="Average number of Assault", title = "Figure 2.4 - Average Break and Enters vs. Average Assault")
+
+#Average Assaults from 2014 - 2019 vs  Average Homicide from 2014-2019
+Neighbourhood_Crime %>% 
+  ggplot (mapping=aes(x=Neighbourhood_Crime$Homicide_AVG,y=Neighbourhood_Crime$Assault_AVG))+geom_point()+ labs(x = "Average counts of homicide", y="Average number of Assault", title = "Figure 2.5 - Average Homicide vs. Average Assault")
+
+#Average Assaults from 2014 - 2019 vs  Average Robbery from 2014-2019
+Neighbourhood_Crime %>% 
+  ggplot (mapping=aes(x=Neighbourhood_Crime$Robbery_AVG,y=Neighbourhood_Crime$Assault_AVG))+geom_point()+ labs(x = "Average counts of Robbery", y="Average number of Assault", title = "Figure 2.6 - Average Robbery vs. Average Assault")
+
+#Average Assaults from 2014 - 2019 vs  Average Thefts over from 2014-2019
+Neighbourhood_Crime %>% 
+  ggplot (mapping=aes(x=Neighbourhood_Crime$TheftOver_AVG,y=Neighbourhood_Crime$Assault_AVG))+geom_point()+ labs(x = "Average counts of theft over", y="Average number of Assault", title = "Figure 2.7 - Average Thefts Over vs. Average Assault")
+```
+Results: From Figure 2.1, we could find that each neighborhood has a similar average assault, there is no linear relationship between neighborhood and average assault. However, there is an extreme value, which is the neighborhood ID near 75. In other words, this neighborhood has a huge amount of assault, but other neighborhoods have a similar amount of assault from 2014-2019. From Figure 2.2, we could realize a positive relationship between population and average assault. In other words, when the population increases, the amount of assault increases. From Figure 2.3, there is a positive relationship between average number of auto theft and average number of assault. This implies that when there are more auto thefts, there would be more assaults. Regards to Figure 2.4, there is a positive relationship between average number of break and enters and average number of assault. This implies that when the amount of break and enters increases, there would be more assaults. From Figure 2.5，it is likely that the number of average assault is weakly positively related with average counts of homicide. Thus, when the amount of homicide increases, the amount of average assault also increases. From Figure 2.6, we could realize a positive relationship between average counts of robbery and average number of assault. Therefore, when the amount of robbery increases, the amount of assault increases as well. We could also find a positive relationship between average counts of theft over and the average amount of assault from Figure 2.7. It is to say that when there are more amount of theft over, there would be more amount of assault as well.
+
+## Model
+#Model 1: linear regression model
+I first fitted a linear regression model(Model 1) between Average Assault and 2016 Census Population, Average break and enters, Average homicides, Average robberies, Average thefts over and Average auto thefts. The mathematical notation of the model is $$Average Assault = \beta_0+\beta_1\times population+ \beta_2\times Average auto theft + \beta_3\times Average Break and Enters + \beta_4\times Average Homicides + \beta_5\times Average Robbery + \beta_6\times average Theft Over + \epsilon_i$$, where the response variable y is average assault from 2014-2019, beta_0 is the intercept of the linear regression line, beta_1 is the estimated coefficient of 2016 Census Population, beta_2 is the estimated coefficient of Average auto thefts, beta_3 is the estimated coefficient of Average Break and enters, beta_4 is the estimated coefficient of Average homicides, beta_5 is the estimated coefficient of Average Robbery, beta_6 is the estimated coefficient of Average thefts over and epsilon_i is the error term in the observation.
+
+#Model 2: linear regression model
+I then fitted another linear regression model(Model 2) by just using 2016 Census Population, Average homicides, Average robberies, Average thefts over and Average auto thefts as independent variables because they have p values smaller than 0.05 in model 1, which means they have a significant linear relationship between my response variable, therefore, I do model 2 for a more precise regression.
+The mathematical notation of the model is $$Average Assault = \beta_0+\beta_1\times population+ \beta_2\times Average auto theft + \beta_3\times Average Homicides + \beta_4\times Average Robbery + \beta_5\times average Theft Over + \epsilon_i$$, where response variable y is average assault from 2014-2019, beta_0 is the intercept of the linear regression line, beta_1 is the estimated coefficient of 2016 Census Population,beta_2 is the estimated coefficient of Average auto thefts, beta_3 is the estimated coefficient of Average homicides, beta_4 is the estimated coefficient of Average Robbery, beta_5 is the estimated coefficient of Average thefts over and epsilon_i is the error term in the observation.
+
+#Mode 3: random intercept model
+Since Population, Average homicides, Average robberies, Average thefts over and Average auto thefts are individual level, (here we identify one neighborhood as one individual,) thus, when we denote a high number of assault as average assault bigger than the mean of average assault from 2014-2019, then neighborhoods are grouped and are nested within contextual/aggregate units (at a higher level). Denote individual level as level 1 and group level as level 2.
+Therefore, I do a random intercept model, which allow intercepts to vary. The level 1 mathematical notation of the model is $$Average Assault_{ij}= \beta_0+\beta_{1j}\times population_{ij}+ \beta_{2j}\times Average auto theft_{ij} + \beta_{3j}\times Average Homicides_{ij} + \beta_{4i}\times Average Robbery_{ij} + \beta_{5j}\times average Theft Over_{ij} + \epsilon_i$$, where response variable y_ij is average assault from 2014-2019 at Level 1 (subscript i refers to individual case, subscript j refers to the group), each X_{ij} refers to the Level 1 predictor such as Population, Average homicides, Average robberies, Average thefts over and Average auto thefts are individual level. beta_0 is the intercept of the dependent variable in group j (Level 2), beta_{1j} refers to the slope for the relationship in group j (Level 2) between population and the Average assault. beta_{2j} refers to the slope for the relationship in group j (Level 2) between Average auto theft and the Average assault. beta_{3j} refers to the slope for the relationship in group j (Level 2) between Average Homicides and the Average assault. beta_{4j} refers to the slope for the relationship in group j (Level 2) between Average Robbery and the Average assault. beta_{5j} refers to the slope for the relationship in group j (Level 2) between Average Theft Over and the Average assault. And epsilon_i is random errors of prediction for the Level 1 equation.
+
+#Model 4: logistic regression midel
+I want to know the relationship between independent variables and whether having a large number of assaults, Thus, I fitted a logistic regression model between whether having a large number of assaults or not and the 2016 Census Population, Average homicides, Average robberies, Average thefts over and Average auto thefts.
+First I defined that if the Neighborhood's average assault is bigger than the mean of average assault from 2014-2019 which is 132.65, then the respondent is considered having a large number of assaults, where have a large number of assaults = 1 and not = 0. The mathematical notation of the model is $$log(\hat p/(1-\hat p)) = \beta_0 +\beta_1\times population +\beta_2\times Average auto theft + \beta_3\times Average Homicide + \beta_4\times Average Robbery + \beta_5\times Average TheftsOver $$, where the result of the function represents the probability of having large number of assault; beta_0 represent the intercept of the linear regression line; beta_1 represents the change in log odds as there is a one-unit increase in 2016 census population. beta_2 represents the change in log odds as there is a one-unit increase in average auto theft. beta_3 represents the change in log odds as there is a one-unit increase in average homicide. beta_4 represents the change in log odds as there is a one-unit increase in average robbery and beta_5 represents the change in log odds as there is a one-unit increase in average theft over.
+
+#Model 5: multilevel Bayesian, logistic regression model
+from model 4, I notice that the probability of having a large number of assaults or not does not have a significant linear relationship between 2016 Census Population, Average homicides, Average thefts over and Average auto thefts. Therefore, I do a multilevel Bayesian Logistic Regression model and the mathematical notation of the model is $$log(\hat p/(1-\hat p))_{ij}= \beta_0+\beta_{1j}\times population_{ij}+ \beta_{2j}\times Average auto theft_{ij} + \beta_{3j}\times Average Homicides_{ij} + \beta_{4i}\times Average Robbery_{ij} + \beta_{5j}\times average Theft Over_{ij} + \epsilon_i$$. where response variable y_ij is the probability of having a large number of assault at Level 1 (subscript i refers to the individual case, subscript j refers to the group), each X_{ij} refers to the Level 1 predictor such as Population, Average homicides, Average robberies, Average thefts over and Average auto thefts are individual level. beta_0 is the intercept of the dependent variable in group j (Level 2), beta_{1j} refers to the slope for the relationship in group j (Level 2) between population and the Average assault. beta_{2j} refers to the slope for the relationship in group j (Level 2) between Average auto theft and the Average assault. beta_{3j} refers to the slope for the relationship in group j (Level 2) between Average Homicides and the Average assault. beta_{4j} refers to the slope for the relationship in group j (Level 2) between Average Robbery and the Average assault. beta_{5j} refers to the slope for the relationship in group j (Level 2) between Average Theft Over and the Average assault. And epsilon_i is random errors of prediction for the Level 1 equation.
+```{r}
+model_1 <- lm(Neighbourhood_Crime$Assault_AVG ~ Neighbourhood_Crime$Population + Neighbourhood_Crime$AutoTheft_AVG + Neighbourhood_Crime$BreakandEnter_AVG + Neighbourhood_Crime$Homicide_AVG + Neighbourhood_Crime$Robbery_AVG + Neighbourhood_Crime$TheftOver_AVG ,data = Neighbourhood_Crime)
+summary(model_1)
+
+model_2 <- lm(Neighbourhood_Crime$Assault_AVG ~ Neighbourhood_Crime$Population + Neighbourhood_Crime$AutoTheft_AVG + Neighbourhood_Crime$Homicide_AVG + Neighbourhood_Crime$Robbery_AVG + Neighbourhood_Crime$TheftOver_AVG ,data = Neighbourhood_Crime)
+summary(model_2)
+
+library(tidyverse)
+library(lme4)
+Neighbourhood_Crime <- Neighbourhood_Crime %>% 
+  mutate(large_number_of_Assault = ifelse(Neighbourhood_Crime$Assault_AVG >= mean(Neighbourhood_Crime$Assault_AVG), 1, 0))
+model_3<-lmer(Neighbourhood_Crime$Assault_AVG ~ Neighbourhood_Crime$Population + Neighbourhood_Crime$AutoTheft_AVG + Neighbourhood_Crime$Homicide_AVG +Neighbourhood_Crime$Robbery_AVG + Neighbourhood_Crime$TheftOver_AVG + (1|Neighbourhood_Crime$large_number_of_Assault), data = Neighbourhood_Crime, REML=F)
+summary(model_3)
+
+model_4<-glm(large_number_of_Assault ~ Neighbourhood_Crime$Population + Neighbourhood_Crime$AutoTheft_AVG + Neighbourhood_Crime$Homicide_AVG + Neighbourhood_Crime$Robbery_AVG + Neighbourhood_Crime$TheftOver_AVG, family = binomial, data = Neighbourhood_Crime)
+summary(model_4)
+
+library(brms)
+data_table=Neighbourhood_Crime
+model_5<-brms::brm(large_number_of_Assault ~ Population + AutoTheft_AVG + Homicide_AVG + Robbery_AVG + TheftOver_AVG, family=bernoulli(), data=Neighbourhood_Crime)
+summary(model_5)
+```
+
+## Model Results 
+Result for model 1: From the summary result, the equation of our hypothesis is $$Average Assault=(-14.14e)+(2.138e-03)\times population-1.095e\times Average auto theft-(1.740e-01)\times Average Break and Enters+(20.84e)\times Average Homicides +3.254e\times Average Robbery+6.231e\times average Theft Over$$. Therefore, when the population increases by 1 unit, the average assault will increase by 2.138e* 10^(-3). When average auto theft increases by 1 unit, the average assault will decrease by 1.095e, when the number of average breaks and enters increases by 1 unit, the number of average assaults will decrease by 1.74e* 10^(-1). When the number of average homicides increases by 1 unit, the number of average assault will increase by 20.84 e. When average robbery increase by 1 unit, the average number of assault will increase by 3.254e unit and the average number of assault will increase by 6.231e unit if average theft over increase by 1 unit. As for the P-values, the result shows that P-values for all independent variables except breaks and enters are all smaller than 0.05, in other words, we could find a significant positive relationship between average assault and population, average homicides, average robbery, average theft over and a significant negative relationship between average assault and average auto theft. For a more precise result, I did model 2 without setting break and enters as my explanatory variable.
+
+Result for model 2: From the summary result, the equation for model 2 is $$Average Assault = -15.94e+(1.988e-03)\times population-1.053e\times Average auto theft + 21.07e\times Average Homicides+3.188e\times Average Robbery+5.755e\times average Theft Over$$. Therefore, when the population increases by 1 unit, the average assault will increase by 1.988e* 10^(-3). When average auto theft increases by 1 unit, the average assault will decrease by 1.053e. When the number of average homicides increases by 1 unit, the number of average assault will increase by 21.07e. When average robbery increase by 1 unit, the average number of assault will increase by 3.188e unit and the average number of assault will increase by 5.755e unit if average theft over increase by 1 unit. All the P-values for those explanatory variables are smaller than 0.05, which means we could find a significant relationship between y and x. The R-squared is 0.8964, in other words, my independent variables can explain 89.64% of the variation of my y variable(average assault).
+
+Result for model 3: The summary table shows that the formula of model 3 should be $$Average Assault_{ij}= 7.2068240+0.0015109\times population_{ij}-1.0644302\times Average auto theft_{ij} +17.9932064\times Average Homicides_{ij} +2.9046102\times Average Robbery_{ij} +5.8504121\times average Theft Over_{ij}$$. From the result, we could find that the absolute values of all T-values are bigger than 1.96, in other words, we could find a significant positive relationship between average assault and population, average homicides, average robbery, average theft over in each group. Similarly, we could find a significant negative relationship between average assault and average auto theft in each group. 
+
+Result for model 4: The result of model 4 shows that the equation should be $$log(\hat p/(1-\hat p)) = -8.139e+(7.303e-05)\times population-(4.660e-02)\times Average auto theft + 1.375e\times Average Homicide +2.232e-01\times Average Robbery + (1.459e-01)\times Average TheftsOver $$. The result shows that when the population increases by 1 unit, the log odds of "having large number of assault" will increase by 7.303e * 10^(-5) unit. When average auto theft increases by 1 unit, the log odds of "having large number of assault" will decrease by 0.0466e. When average homicide increases by 1 unit, the log odds of "having large number of assault" will decrease by 1.375e. When average robbery increases by 1 unit, the log odds of "having large number of assault" will increase by 0.223. When average theft over increases by 1 unit, the log odds of "having large number of assault" will increase by 0.146. However, most P-values are bigger than 0.05, then we could do more for further investigation. Hence, we could conclude that more population, homicide, robbery, theft over will increase the probability of having large amount of assault. Contrary, more auto theft will decrease the probability of having large amount of assault.
+
+Result for model 5: Since I set another variable called "large number of assault" and make the participants to be organized at 2 levels, then we could conclude that the equation for model 5 should be $$log(\hat p/(1-\hat p))_{ij}=-9.16-0.05\times Average auto theft_{ij} +1.45\times Average Homicides_{ij} +0.25\times Average Robbery_{ij} + 0.17\times average Theft Over_{ij}$$ from the summary table. In this model, we set rhat equal to 1. This result also proves that more population, homicide, robbery, theft over will increase the probability of having a large amount of assault but more auto theft will decrease the probability of having a large amount of assault.
+
+## Discussion
+Initially, I want to investigate whether the average assault has a linear relationship with independent variables(Population, Average auto theft, Average break and enters, Average homicides, Average robberies, and Average thefts). From model 1, we could find a significant positive relationship between average assault and population, average homicides, average robbery, average theft over. There shows a significant negative relationship between average assault and average auto theft. However, I realize that the relationship between assault and break and enters are not significant, therefore, I do another linear model, the result of model 2 prove the significant linear relationship between average assault and population, average homicides, average robbery, average theft over and average auto theft again. 
+
+Then, for a deeper investigation, I set another dummy variable called "large number of assault" if the average assault in the neighborhood is bigger than the mean of average assault from 2014-2019. I do a random intercept model, which allow the intercept of the linear regression model to vary. From the result, I find a significant positive relationship between "average assault" and "population, average homicides, average robbery, average theft over" no matter the neighborhood has large number of assault or not. Similarly, we could find a significant negative relationship between "average assault" and "average auto theft" no matter the neighborhood has large number of assault or not. 
+
+In addition, I explore the relationship between the probability of having large number of assaults and explanatory variables. From models 4 and 5, more population, homicide, robbery, theft over will increase the probability of having large amount of assault but more auto theft will decrease the probability of having large amount of assault.
+
+Furthermore, more population in the neighborhood might increase the average assault in the neighborhood because more people are there, and it is more likely to have conflict among them. More homicide, robbery and theft over mean more criminal behavior in the neighborhood, therefore, it is more likely for the people in the neighborhood to be assaulted. 
+
+However, from the models, more auto theft is more likely to decrease the amount of assault, which contradicts with the positive relationship shown in Figure 2.3. Thus, in the next step, I would investigate more on the average assault and average auto theft. To do this, I might use a quadratic model or other types of model. Besides, when we realize the relationship between criminal acts and assault, we could put more attention to those neighborhoods with a larger population and more criminal acts in order to protect the safety of individuals.
+
+From the project, one weakness in this project is that my causal inference is not based on an experimental study, rather, it is an observational study. Thus, people might argue for the precise. Another weakness is that my investigation is not perfect enough, people might feel the relationship between average assault and auto theft needs more discussion.
+
+All in all, we might answer the questions in the introduction, that is, except for one specific neighborhood, all neighborhoods are likely to have a similar amount of assault. Besides, neighborhoods with more related criminal acts like homicide, robbery, theft over exist are more likely to have more assault. Even though some of the data in this project might lack accuracy, we could find significant evidence to prove the relationship between my response factor and explanatory factors. And this project complete my initial task and answer the questions in the introduction part.
+
+## References
+- Caetano, S. (2020). Week 6: Multilevel Regression & Poststratification. STA304 Survey, Sampling and Observational Data. University of Toronto.
+
+- Data Camp, “Adding new columns.” Retrieved December 20, 2020, from
+campus.datacamp.com/courses/introduction-to-r-for-finance/data-frames-3?ex=10
+
+- Engineering Statistics Handbook, “Histogram Interpretation: Skewed (Non-Normal) Right”, Nist Sematech, Retrieved December 20, 2020, from itl.nist.gov/div898/handbook/eda/section3/histogr6.html
+
+- University of Toronto, OPEN DATA. Retrieved December 20, 2020, from https://open.toronto.ca/dataset/neighbourhood-crime-rates/
+
+- Wu, Changbao, and Mary E. Thompson. "Basic Concepts in Survey Sampling." Sampling Theory and Practice. Springer, Cham, 2020. 3-15.
+
+
